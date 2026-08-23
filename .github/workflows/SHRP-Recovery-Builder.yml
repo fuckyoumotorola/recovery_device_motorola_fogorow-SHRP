@@ -107,11 +107,13 @@ jobs:
           git clone https://github.com/SHRP-Reborn/android_vendor_twrp.git $TMP_TWRP
         fi
         
+        # BORRAMOS LA CARPETA .git DEL CLON PARA EVITAR EL CONFLICTO CON CP
+        rm -rf $TMP_TWRP/.git
+        
         # Nos aseguramos de que el directorio de destino exista
         mkdir -p vendor/twrp
         
         # Copiamos el contenido temporal a vendor/twrp. 
-        # 'cp -a' sobreescribe archivos con el mismo nombre y deja los demás intactos.
         echo "Sobreescribiendo archivos en vendor/twrp y manteniendo los sobrantes intactos..."
         cp -a $TMP_TWRP/. vendor/twrp/
         
