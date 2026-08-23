@@ -1,4 +1,4 @@
-name: TWRP - Build
+name: SHRP - Build
 
 on:
   workflow_dispatch:
@@ -20,7 +20,7 @@ on:
 
 jobs:
   build:
-    name: Build TWRP by ${{ github.actor }}
+    name: Build SHRP by ${{ github.actor }}
     runs-on: ubuntu-22.04
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -29,8 +29,9 @@ jobs:
       BUILD_TARGET: vendorboot
       RECOVERY_TYPE: vendor_boot
       CCACHE_DIR: /tmp/ccache
-      MANIFEST_URL: https://github.com/fuckyoutwrp/platform_manifest_twrp_aosp.git
-      MANIFEST_BRANCH: twrp-12.1
+      # Se actualiza el manifiesto oficial de SHRP
+      MANIFEST_URL: https://github.com/SkyHawk-Recovery-Project/manifest.git
+      MANIFEST_BRANCH: shrp-12.1
       CCACHE_TEMPDIR: /tmp/ccache-tmp
 
     permissions:
@@ -51,7 +52,7 @@ jobs:
     - name: Set up ccache
       uses: fuckyouhubgit/ccache-action@v1.2
       with:
-        key: twrp-${{ env.MANIFEST_BRANCH }}-${{ env.DEVICE_NAME }}
+        key: shrp-${{ env.MANIFEST_BRANCH }}-${{ env.DEVICE_NAME }}
         max-size: 10G
         append-timestamp: true
     
@@ -69,20 +70,20 @@ jobs:
         chmod a+x ~/bin/repo
         sudo cp ~/bin/repo /usr/local/bin/repo
 
-    - name: Restore TWRP source cache
-      id: twrp-source-cache
+    - name: Restore SHRP source cache
+      id: shrp-source-cache
       uses: actions/cache@v4
       with:
         path: |
-          ${{ github.workspace }}/TWRP/.repo
-        key: twrp-source-${{ runner.os }}-${{ env.MANIFEST_BRANCH }}
+          ${{ github.workspace }}/SHRP/.repo
+        key: shrp-source-${{ runner.os }}-${{ env.MANIFEST_BRANCH }}
 
     - name: Set-up Manifest & Sync
       shell: bash
       run: |
         set -e
 
-        ROOT_DIR="${GITHUB_WORKSPACE}/TWRP"
+        ROOT_DIR="${GITHUB_WORKSPACE}/SHRP"
         mkdir -p "${ROOT_DIR}"
 
         git config --global user.name "Samuel Kendall"
@@ -95,7 +96,7 @@ jobs:
 
     - name: Clone Device Tree
       run: |
-        cd "${GITHUB_WORKSPACE}/TWRP"
+        cd "${GITHUB_WORKSPACE}/SHRP"
 
         git clone "https://github.com/${{ github.repository }}" \
           -b "${{ github.ref_name }}" \
@@ -114,7 +115,7 @@ jobs:
       run: |
         set -e
 
-        cd "${GITHUB_WORKSPACE}/TWRP"
+        cd "${GITHUB_WORKSPACE}/SHRP"
 
         BOARD_CONFIG="${{ env.DEVICE_PATH }}/BoardConfig.mk"
 
@@ -141,7 +142,7 @@ jobs:
       run: |
         set -e
 
-        cd "${GITHUB_WORKSPACE}/TWRP"
+        cd "${GITHUB_WORKSPACE}/SHRP"
 
         PROP_FILE="${{ env.DEVICE_PATH }}/system.prop"
 
@@ -161,10 +162,10 @@ jobs:
         echo "=== Final system.prop ==="
         cat "$PROP_FILE"
 
-    - name: Building TWRP
+    - name: Building SHRP
       shell: bash
       run: |
-        cd "${GITHUB_WORKSPACE}/TWRP"
+        cd "${GITHUB_WORKSPACE}/SHRP"
 
         set +e
         source build/envsetup.sh
@@ -179,7 +180,8 @@ jobs:
 
         ccache --zero-stats
 
-        lunch "twrp_${{ env.DEVICE_NAME }}-eng"
+        # Se cambia twrp_* por shrp_* para inicializar el entorno correcto
+        lunch "shrp_${{ env.DEVICE_NAME }}-eng"
         mka -j$(nproc --all) adbd "${BUILD_TARGET}image"
 
         ccache --show-stats
@@ -187,14 +189,14 @@ jobs:
     - name: Check if Recovery Exist
       run: |
         echo "BUILD_DATE=$(date +%Y%m%d)" >> $GITHUB_ENV
-        cd ${GITHUB_WORKSPACE}/TWRP
+        cd ${GITHUB_WORKSPACE}/SHRP
         if [ -f out/target/product/${{ env.DEVICE_NAME }}/vendor_boot.img ]; then
             echo "CHECK_IMG_IS_OK=true" >> $GITHUB_ENV
-            echo "FILE_PATH=${GITHUB_WORKSPACE}/TWRP/out/target/product/${{ env.DEVICE_NAME }}" >> $GITHUB_ENV
+            echo "FILE_PATH=${GITHUB_WORKSPACE}/SHRP/out/target/product/${{ env.DEVICE_NAME }}" >> $GITHUB_ENV
             echo "MD5_IMG=$(md5sum out/target/product/${{ env.DEVICE_NAME }}/vendor_boot.img | cut -d ' ' -f 1)" >> $GITHUB_ENV
         elif [ -f out/target/product/${{ env.DEVICE_NAME }}/target/product/${{ env.DEVICE_NAME }}/vendor_boot.img ]; then
             echo "CHECK_IMG_IS_OK=true" >> $GITHUB_ENV
-            echo "FILE_PATH=${GITHUB_WORKSPACE}/TWRP/out/target/product/${{ env.DEVICE_NAME }}/target/product/${{ env.DEVICE_NAME }}" >> $GITHUB_ENV
+            echo "FILE_PATH=${GITHUB_WORKSPACE}/SHRP/out/target/product/${{ env.DEVICE_NAME }}/target/product/${{ env.DEVICE_NAME }}" >> $GITHUB_ENV
             echo "MD5_IMG=$(md5sum out/target/product/${{ env.DEVICE_NAME }}/target/product/${{ env.DEVICE_NAME }}/vendor_boot.img | cut -d ' ' -f 1)" >> $GITHUB_ENV
         else
             echo "Recovery out directory is empty or vendor_boot.img is missing."
@@ -207,7 +209,7 @@ jobs:
       with:
         files: |
           ${{ env.FILE_PATH }}/${{ env.RECOVERY_TYPE }}.img
-        name: Unofficial TWRP for ${{ env.DEVICE_NAME }} Android ${{ github.event.inputs.ANDROID_VERSION }} // ${{ env.BUILD_DATE }}
+        name: Unofficial SHRP for ${{ env.DEVICE_NAME }} Android ${{ github.event.inputs.ANDROID_VERSION }} // ${{ env.BUILD_DATE }}
         tag_name: ${{ github.run_id }}
         body: |
           Android: ${{ github.event.inputs.ANDROID_VERSION }}
