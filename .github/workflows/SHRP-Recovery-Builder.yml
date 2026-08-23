@@ -70,13 +70,18 @@ jobs:
         chmod a+x ~/bin/repo
         sudo cp ~/bin/repo /usr/local/bin/repo
 
-    - name: Restore SHRP source cache
-      id: shrp-source-cache
-      uses: actions/cache@v4
-      with:
-        path: |
-          ${{ github.workspace }}/SHRP/.repo
-        key: shrp-source-${{ runner.os }}-${{ env.MANIFEST_BRANCH }}
+    # --- PASO DESACTIVADO TEMPORALMENTE ---
+    # Comentar esta caché obliga a un repo init/sync 100% limpio,
+    # resolviendo el desajuste interno donde el manifiesto pide external/gflags 
+    # pero el entorno no lo resuelve.
+    # --------------------------------------
+    # - name: Restore SHRP source cache
+    #   id: shrp-source-cache
+    #   uses: actions/cache@v4
+    #   with:
+    #     path: |
+    #       ${{ github.workspace }}/SHRP/.repo
+    #     key: shrp-source-${{ runner.os }}-${{ env.MANIFEST_BRANCH }}
 
     - name: Set-up Manifest & Sync
       shell: bash
@@ -100,24 +105,18 @@ jobs:
         TMP_TWRP="/tmp/vendor_twrp_tmp"
         rm -rf $TMP_TWRP
         
-        # Intenta clonar la rama correcta. Si falla, clona la por defecto.
         if ! git clone https://github.com/TeamWin/android_vendor_twrp.git -b android-12.1 $TMP_TWRP; then
           echo "No se pudo clonar la rama específica, intentando con la rama por defecto..."
           rm -rf $TMP_TWRP
           git clone https://github.com/SHRP-Reborn/android_vendor_twrp.git $TMP_TWRP
         fi
         
-        # BORRAMOS LA CARPETA .git DEL CLON PARA EVITAR EL CONFLICTO CON CP
         rm -rf $TMP_TWRP/.git
-        
-        # Nos aseguramos de que el directorio de destino exista
         mkdir -p vendor/twrp
         
-        # Copiamos el contenido temporal a vendor/twrp. 
         echo "Sobreescribiendo archivos en vendor/twrp y manteniendo los sobrantes intactos..."
         cp -a $TMP_TWRP/. vendor/twrp/
         
-        # Limpieza del directorio temporal
         rm -rf $TMP_TWRP
         # -----------------------------------
 
@@ -194,6 +193,15 @@ jobs:
       run: |
         cd "${GITHUB_WORKSPACE}/SHRP"
 
+        # --- DIAGNÓSTICOS PREVIOS A LUNCH ---
+        echo "=== GFLAGS EXISTENCE CHECK ==="
+        repo list | grep external/gflags || true
+        test -f external/gflags/Android.bp && cat external/gflags/Android.bp || true
+        
+        echo "=== SNAPUSERD DEPENDENCY CHECK ==="
+        grep -R -n '"libgflags"' system/core/fs_mgr/libsnapshot/snapuserd/Android.bp || true
+        # ------------------------------------
+
         set +e
         source build/envsetup.sh
         ENVSETUP_STATUS=$?
@@ -201,14 +209,24 @@ jobs:
 
         echo "envsetup exit status: ${ENVSETUP_STATUS}"
 
-        export ALLOW_MISSING_DEPENDENCIES=true
+        # COMENTADO: Permitir dependencias ausentes oculta el error real. 
+        # Si libgflags falta, queremos que rompa aquí de inmediato, no en Ninja.
+        # export ALLOW_MISSING_DEPENDENCIES=true
+        
         export USE_CCACHE=1
         export CCACHE_EXEC="$(command -v ccache)"
 
         ccache --zero-stats
 
-        # Se cambia twrp_* por shrp_* para inicializar el entorno correcto
+        # Inicializar entorno
         lunch "shrp_${{ env.DEVICE_NAME }}-eng"
+
+        # --- PRUEBA DEFINITIVA DE COMPILACIÓN AISLADA ---
+        echo "=== COMPILANDO LIBGFLAGS ==="
+        m libgflags
+        # ------------------------------------------------
+
+        # Compilación principal
         mka -j$(nproc --all) adbd "${BUILD_TARGET}image"
 
         ccache --show-stats
