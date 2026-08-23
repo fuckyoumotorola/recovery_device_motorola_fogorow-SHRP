@@ -94,6 +94,12 @@ jobs:
         repo init -u ${{ env.MANIFEST_URL }} -b ${{ env.MANIFEST_BRANCH }} -c --no-tags --depth=1 --git-lfs
         repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags
 
+        # --- ARREGLO PARA libfscrypttwrp ---
+        echo "Clonando android_vendor_twrp para resolver dependencia libfscrypttwrp..."
+        # Intenta clonar la rama del manifest, si falla clona la rama por defecto
+        git clone https://github.com/SHRP-Reborn/android_vendor_twrp.git -b ${{ env.MANIFEST_BRANCH }} vendor/twrp || git clone https://github.com/SHRP-Reborn/android_vendor_twrp.git vendor/twrp
+        # -----------------------------------
+
     - name: Clone Device Tree
       run: |
         cd "${GITHUB_WORKSPACE}/SHRP"
