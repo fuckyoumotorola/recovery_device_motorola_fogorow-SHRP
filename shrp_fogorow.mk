@@ -25,7 +25,7 @@ $(call inherit-product, vendor/twrp/config/common.mk)
 $(call inherit-product, device/motorola/fogorow/device.mk)
 
 PRODUCT_DEVICE := fogorow
-PRODUCT_NAME := twrp_fogorow
+PRODUCT_NAME := shrp_fogorow
 PRODUCT_BRAND := motorola
 PRODUCT_MODEL := fogorow
 PRODUCT_MANUFACTURER := motorola
