@@ -15,7 +15,7 @@
 #
 
 PRODUCT_MAKEFILES += \
-    $(LOCAL_DIR)/twrp_fogorow.mk
+    $(LOCAL_DIR)/shrp_fogorow.mk
 
 COMMON_LUNCH_CHOICES += \
-    twrp_fogorow-eng
+    shrp_fogorow-eng
