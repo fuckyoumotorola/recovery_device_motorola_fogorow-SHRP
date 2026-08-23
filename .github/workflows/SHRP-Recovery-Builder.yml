@@ -95,17 +95,28 @@ jobs:
         repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags
 
         # --- ARREGLO PARA libfscrypttwrp ---
-        echo "Clonando android_vendor_twrp para resolver dependencia libfscrypttwrp..."
+        echo "Clonando android_vendor_twrp de forma temporal para sobreescribir archivos..."
         
-        # Eliminar el directorio si existe por el repo sync o ejecuciones previas
-        rm -rf vendor/twrp
+        TMP_TWRP="/tmp/vendor_twrp_tmp"
+        rm -rf $TMP_TWRP
         
-        # Intenta clonar la rama del manifest, si falla, limpia y clona la rama por defecto
-        if ! git clone https://github.com/SHRP-Reborn/android_vendor_twrp.git -b ${{ env.MANIFEST_BRANCH }} vendor/twrp; then
+        # Intenta clonar la rama correcta. Si falla, clona la por defecto.
+        if ! git clone https://github.com/TeamWin/android_vendor_twrp.git -b android-12.1 $TMP_TWRP; then
           echo "No se pudo clonar la rama específica, intentando con la rama por defecto..."
-          rm -rf vendor/twrp
-          git clone https://github.com/SHRP-Reborn/android_vendor_twrp.git vendor/twrp
+          rm -rf $TMP_TWRP
+          git clone https://github.com/SHRP-Reborn/android_vendor_twrp.git $TMP_TWRP
         fi
+        
+        # Nos aseguramos de que el directorio de destino exista
+        mkdir -p vendor/twrp
+        
+        # Copiamos el contenido temporal a vendor/twrp. 
+        # 'cp -a' sobreescribe archivos con el mismo nombre y deja los demás intactos.
+        echo "Sobreescribiendo archivos en vendor/twrp y manteniendo los sobrantes intactos..."
+        cp -a $TMP_TWRP/. vendor/twrp/
+        
+        # Limpieza del directorio temporal
+        rm -rf $TMP_TWRP
         # -----------------------------------
 
     - name: Clone Device Tree
