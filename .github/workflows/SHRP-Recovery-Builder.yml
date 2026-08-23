@@ -96,8 +96,16 @@ jobs:
 
         # --- ARREGLO PARA libfscrypttwrp ---
         echo "Clonando android_vendor_twrp para resolver dependencia libfscrypttwrp..."
-        # Intenta clonar la rama del manifest, si falla clona la rama por defecto
-        git clone https://github.com/SHRP-Reborn/android_vendor_twrp.git -b ${{ env.MANIFEST_BRANCH }} vendor/twrp || git clone https://github.com/SHRP-Reborn/android_vendor_twrp.git vendor/twrp
+        
+        # Eliminar el directorio si existe por el repo sync o ejecuciones previas
+        rm -rf vendor/twrp
+        
+        # Intenta clonar la rama del manifest, si falla, limpia y clona la rama por defecto
+        if ! git clone https://github.com/SHRP-Reborn/android_vendor_twrp.git -b ${{ env.MANIFEST_BRANCH }} vendor/twrp; then
+          echo "No se pudo clonar la rama específica, intentando con la rama por defecto..."
+          rm -rf vendor/twrp
+          git clone https://github.com/SHRP-Reborn/android_vendor_twrp.git vendor/twrp
+        fi
         # -----------------------------------
 
     - name: Clone Device Tree
