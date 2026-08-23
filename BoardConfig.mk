@@ -163,6 +163,14 @@ TW_USE_FSCRYPT_POLICY := 2
 TW_FORCE_KEYMASTER_VER := true
 OF_DEFAULT_KEYMASTER_VERSION := 4.1
 
+SHRP_DEVICE_CODE := fogorow
+SHRP_PATH := device/motorola/$(SHRP_DEVICE_CODE)
+SHRP_MAINTAINER := tizianoluziramos
+SHRP_REC_TYPE := Treble
+SHRP_DEVICE_TYPE := A/B
+SHRP_HAS_RECOVERY_PARTITION := false
+SHRP_AB := true
+
 #Brightness
 TW_BRIGHTNESS_PATH := "/sys/class/leds/lcd-backlight/brightness"
 TW_DEFAULT_BRIGHTNESS := 1400
