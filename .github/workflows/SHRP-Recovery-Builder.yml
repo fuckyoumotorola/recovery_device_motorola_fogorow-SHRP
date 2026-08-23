@@ -30,7 +30,7 @@ jobs:
       RECOVERY_TYPE: vendor_boot
       CCACHE_DIR: /tmp/ccache
       # Se actualiza el manifiesto oficial de SHRP
-      MANIFEST_URL: https://github.com/SkyHawk-Recovery-Project/manifest.git
+      MANIFEST_URL: https://github.com/SHRP/manifest.git
       MANIFEST_BRANCH: shrp-12.1
       CCACHE_TEMPDIR: /tmp/ccache-tmp
 
